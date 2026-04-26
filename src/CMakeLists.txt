@@ -1,0 +1,27 @@
+# Create the executable
+add_executable(llmexe
+    main.cpp
+    model_loader.cpp
+    inference.cpp
+)
+
+# Link llama.cpp libraries
+target_link_libraries(llmexe
+    PRIVATE
+        llama
+        common
+)
+
+# Include directories
+target_include_directories(llmexe
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/third_party/llama.cpp
+        ${CMAKE_SOURCE_DIR}/third_party/llama.cpp/common
+)
+
+# Set compile definitions
+target_compile_definitions(llmexe
+    PRIVATE
+        _WIN32
+)
