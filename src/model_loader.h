@@ -4,7 +4,6 @@
 #include <string>
 
 struct llama_model;
-struct llama_context;
 
 namespace llmexe {
 
@@ -13,7 +12,7 @@ public:
     ModelLoader();
     ~ModelLoader();
 
-    // Load model from embedded data
+    // Load model from embedded data (writes to temp file first)
     bool loadFromMemory(const void* data, size_t size);
     
     // Get the loaded model
@@ -24,6 +23,7 @@ public:
 
 private:
     llama_model* model_;
+    std::string temp_model_path_;
     std::string last_error_;
 };
 
