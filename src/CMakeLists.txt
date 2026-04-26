@@ -3,6 +3,7 @@ add_executable(llmexe
     main.cpp
     model_loader.cpp
     inference.cpp
+    ${CMAKE_SOURCE_DIR}/model/model_data.cpp
 )
 
 # Link llama.cpp libraries (conditional)
@@ -10,7 +11,7 @@ if(LLMEXE_BUILD_LLAMA)
     target_link_libraries(llmexe
         PRIVATE
             llama
-            common
+            ggml_static
     )
 endif()
 
@@ -20,6 +21,7 @@ target_include_directories(llmexe
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/third_party/llama.cpp
         ${CMAKE_SOURCE_DIR}/third_party/llama.cpp/common
+        ${CMAKE_SOURCE_DIR}/model
 )
 
 # Set compile definitions (platform-specific)
