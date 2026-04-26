@@ -5,7 +5,8 @@ build-*/
 # Model files (too large for git)
 model/
 *.gguf
-*.h (model_data.h specifically)
+# model_data.h specifically (generated from GGUF, very large)
+model_data.h
 
 # IDE files
 .vscode/
