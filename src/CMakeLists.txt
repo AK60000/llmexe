@@ -5,12 +5,14 @@ add_executable(llmexe
     inference.cpp
 )
 
-# Link llama.cpp libraries
-target_link_libraries(llmexe
-    PRIVATE
-        llama
-        common
-)
+# Link llama.cpp libraries (conditional)
+if(LLMEXE_BUILD_LLAMA)
+    target_link_libraries(llmexe
+        PRIVATE
+            llama
+            common
+    )
+endif()
 
 # Include directories
 target_include_directories(llmexe
@@ -20,8 +22,10 @@ target_include_directories(llmexe
         ${CMAKE_SOURCE_DIR}/third_party/llama.cpp/common
 )
 
-# Set compile definitions
-target_compile_definitions(llmexe
-    PRIVATE
-        _WIN32
-)
+# Set compile definitions (platform-specific)
+if(WIN32)
+    target_compile_definitions(llmexe
+        PRIVATE
+            _WIN32
+    )
+endif()

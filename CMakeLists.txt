@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Option for building llama.cpp
-option(LLMEXE_BUILD_LLAMA "Build llama.cpp as submodule" ON)
+option(LLMEXE_BUILD_LLAMA "Build llama.cpp as submodule" OFF)
 
 # Include llama.cpp
 if(LLMEXE_BUILD_LLAMA)
