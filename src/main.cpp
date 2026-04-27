@@ -8,7 +8,7 @@
 void printUsage(const char* prog) {
     std::cout << "Usage: " << prog << " [options]\n"
               << "Options:\n"
-              << "  -m, --model <path>      Path to GGUF model file\n"
+              << "  -m, --model <path>      Path to GGUF model file (not needed if model is embedded)\n"
               << "  -p, --prompt <text>     Prompt to generate from\n"
               << "  -n, --max-tokens <n>    Maximum number of tokens to generate (default: 512)\n"
               << "  -t, --threads <n>       Number of threads to use (default: 4)\n"
@@ -20,9 +20,6 @@ void printUsage(const char* prog) {
 int main(int argc, char** argv) {
     std::string prompt = "Hello, how are you?";
     std::string model_path = llmexe::extractEmbeddedModel();
-    if (model_path.empty()) {
-        model_path = "Qwen3-0.6B-Q4_K_M.gguf"; // Default fallback
-    }
 
     llmexe::InferenceParams params;
     params.max_tokens = 512;
@@ -55,12 +52,14 @@ int main(int argc, char** argv) {
         }
     }
     
-    // std::cout << "Loading model " << model_path << "..." << std::endl;
-    
+    if (model_path.empty()) {
+        std::cerr << "Error: No embedded model found and no model specified via -m.\n"
+                  << "Please package a model using the package.ps1 script, or specify one manually with -m.\n";
+        printUsage(argv[0]);
+        return 1;
+    }
+
     llmexe::ModelLoader loader;
-    
-    // Turn off llama.cpp's stderr logging unless necessary
-    // We keep it default here, users expect some loading info
     
     if (!loader.loadFromFile(model_path)) {
         std::cerr << "Failed to load model: " << loader.getLastError() << "\n";
@@ -73,8 +72,6 @@ int main(int argc, char** argv) {
         std::cerr << "Failed to initialize inference engine: " << engine.getLastError() << "\n";
         return 1;
     }
-    
-    // std::cout << "\nGeneration started. Prompt: '" << prompt << "'\n\n";
     
     auto callback = [](const std::string& token) {
         std::cout << token << std::flush;

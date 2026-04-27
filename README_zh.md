@@ -1,20 +1,31 @@
-# llmexe
+# LLMExe
 
 [English](README.md) | [中文](README_zh.md)
 
-一个极简的、独立的 C++ 应用程序，用于使用最新的 `llama.cpp` (v0.10.0+ API) 运行本地大语言模型 (LLM)。
+一个极简工具，用于将任意 `.gguf` 大语言模型打包成**单个、零依赖的 Windows 可执行文件**。
 
 ## 项目概述
 
-本项目提供了一个单一的可执行文件（`llmexe`），它可以加载 `.gguf` 格式的模型文件并执行基于流式输出的文本生成。通过直接与原生的 `llama.cpp` 库交互，本项目彻底避免了任何 Python 依赖。
+LLMExe 改变了分发本地大模型的方式。不再需要用户自行下载模型、安装推理运行时（Python 或 llama.cpp）并运行复杂的命令行，本项目允许你**将任意 GGUF 模型直接绑定到一个静态 C++ 推理运行程序中**。
+
+最终生成什么？一个`.exe` 文件，在任何全新的 Windows 电脑上双击或通过命令行即可运行，立刻执行你的大模型并以流式方式输出文本。
+
+## 核心特性
+
+- **零依赖**：生成的可执行文件完全静态链接，无需任何外部 DLL（甚至不需要 Visual C++ 运行库或 OpenMP）。
+- **通用 GGUF 支持**：支持 `llama.cpp` v0.10.0+ 支持的所有量化格式和模型架构（Qwen、Llama、Mistral 等）。
+- **自解压负载**：可执行文件在运行时将内置模型安全释放到 `%TEMP%` 目录，供原生内存映射加载，后续运行瞬间启动。
+- **C++ 原生性能**：直接基于 `llama.cpp` 推理引擎构建，CPU 推理性能最优。
 
 ## 运行环境要求
 
-- CMake (>= 3.10)
-- 支持 C++17 的编译器 (如 GCC、Clang、MSVC 等)
-- 已下载好的 `.gguf` 模型 (例如 Qwen3-0.6B-Q4_K_M.gguf)
+- CMake (>= 3.20)
+- 支持 C++17 的编译器 (如 GCC/MinGW-w64)
+- 任意已下载的 `.gguf` 模型文件
 
-## 编译指南
+## 编译
+
+构建基础推理可执行文件（`build\bin\llmexe.exe`）。该可执行文件将在后续打包步骤中使用。
 
 ```bash
 mkdir build
@@ -23,52 +34,66 @@ cmake ..
 cmake --build . --config Release
 ```
 
-编译产出的可执行文件将位于 `build/bin/llmexe` (Windows 下为 `build\bin\llmexe.exe`)。
+## 打包模型
 
-## 基本用法
-
-```bash
-./build/bin/llmexe --model path/to/your/model.gguf --prompt "你的提示词" [options]
-```
-
-### 参数选项
-
-- `-m, --model <path>`: 指定 GGUF 模型文件的路径 (必填)
-- `-p, --prompt <text>`: 开始生成的初始提示词 prompt (必填)
-- `-n, --max-tokens <n>`: 允许生成的最大 Token 数量 (默认: 512)
-- `-t, --threads <n>`: 生成时使用的线程数 (默认: 4)
-- `--temp <f>`: 采样温度 Temperature (默认: 0.7)
-- `--top_p <f>`: Top-P 采样参数 (默认: 0.9)
-- `-h, --help`: 显示帮助信息
-
-## 示例
-
-```bash
-./build/bin/llmexe -m ./models/Qwen3-0.6B-Q4_K_M.gguf -p "用一句话解释量子计算。" -n 100 --temp 0.6
-```
-
-## 架构说明
-
-- `src/main.cpp`: 入口程序，负责解析命令行参数。
-- `src/model_loader.cpp`: 初始化 Llama 上下文，管理模型和后端的生命周期。
-- `src/inference.cpp`: 处理分词 (Tokenization)、推理评估循环以及使用最新的 `llama_sampler` API 进行流式输出。
-- `src/self_extract.cpp`: 通过在运行时自动提取追加在可执行文件尾部的 `.gguf` 负载内容，实现无需外部依赖的单文件独立部署功能。
-- `llama.cpp` 集成: 项目通过 CMake 的 `FetchContent` 模块自动拉取并构建最新的 `llama.cpp`。
-
-## 单文件独立打包 (Standalone)
-
-您可以将编译出的可执行文件和 `.gguf` 模型合并打包成一个独立的单文件应用程序。这样便可在任何一台 Windows 电脑上直接运行，而无需附带模型文件或使用 `-m` 参数。
-
-只需运行提供的 PowerShell 打包脚本：
+构建完成后，准备好你的 `.gguf` 模型，使用 PowerShell 脚本将两者绑定为单文件：
 
 ```powershell
-.\scripts\package.ps1
+.\scripts\package.ps1 -ModelPath .\path\to\your_model.gguf -OutputPath .\my_standalone_llm.exe
 ```
 
-这将会生成 `llmexe_standalone.exe` (如果使用的是 0.6B Q4 模型，体积约 400MB)。然后您可以直接运行它：
+这将创建 `my_standalone_llm.exe`（体积略大于原始 `.gguf` 文件）。
+
+## 运行
+
+现在你可以将 `my_standalone_llm.exe` 分发给任何人。他们可以直接运行：
 
 ```powershell
-.\llmexe_standalone.exe --prompt "你好！最近怎么样？"
+.\my_standalone_llm.exe --prompt "用一句话解释量子计算。"
 ```
 
-在运行时，程序会自动将内部包含的模型提取到系统的临时目录 (`%TEMP%`) 中并加载。由于程序会检查缓存的负载文件，因此之后的再次运行将会是瞬间启动的。
+*（提示：用户仍可通过 `-n 1024` 调整最大 Token 数、`--temp 0.8` 调整温度等参数。运行 `-h` 查看所有选项。）*
+
+## 命令行参数
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `-m, --model <path>` | GGUF 模型文件路径（仅在无内置模型时需要） | *（内置或报错）* |
+| `-p, --prompt <text>` | 起始提示词 | *（必填）* |
+| `-n, --max-tokens <n>` | 最大生成 Token 数 | `512` |
+| `-t, --threads <n>` | 使用的 CPU 线程数 | `4` |
+| `--temp <f>` | 采样温度 | `0.7` |
+| `--top_p <f>` | Top-P 采样参数 | `0.9` |
+| `-h, --help` | 显示帮助信息 | |
+
+## 工作原理
+
+LLMExe 由两部分组成：
+
+1. **通用 C++ 推理运行程序**（`src/`）：使用 `llama.cpp` 加载并运行任意 GGUF 模型，以流式方式输出文本。
+2. **自解压打包系统**（`src/self_extract.cpp` + `scripts/package.ps1`）：将 GGUF 模型二进制追加到可执行文件末尾，并在最末端附加 16 字节的尾部标记（`[8字节大小][LLMEXE00]`）。
+
+运行时，可执行文件执行以下步骤：
+1. 读取自身最后 16 字节，检查 `LLMEXE00` 魔术标记。
+2. 若找到，则将内置的模型负载释放到 `%TEMP%`（带有大小缓存，重复运行跳过再次释放）。
+3. 将提取出的 GGUF 文件路径交给 `llama.cpp` 的原生内存映射加载器。
+
+## 项目结构
+
+```
+.
+├── src/
+│   ├── main.cpp          # CLI 入口
+│   ├── model_loader.cpp  # llama.cpp 上下文初始化
+│   ├── inference.cpp     # 分词与推理循环
+│   ├── self_extract.cpp  # 内置模型检测与释放
+│   └── *.h               # 对应头文件
+├── scripts/
+│   └── package.ps1       # PowerShell 打包脚本
+├── third_party/
+│   └── llama.cpp/        # Git 子模块（自动获取）
+├── CMakeLists.txt
+├── LICENSE               # MIT 许可证
+├── README.md
+└── README_zh.md
+```
