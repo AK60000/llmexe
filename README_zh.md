@@ -96,9 +96,13 @@ LLMExe 由两部分组成：
 ├── LICENSE               # MIT 许可证
 ├── README.md
 └── README_zh.md
+```
 
 ## 致谢
 
 **llama.cpp** — https://github.com/ggml-org/llama.cpp  
 本项目直接基于 `llama.cpp` 推理引擎构建，所有 GGUF 加载、分词、采样和模型评估逻辑均由 `llama.cpp`（MIT 许可证）提供。衷心感谢 `ggml-org` 团队构建并维护这一杰出的开源库。
-```
+
+## 相关项目与替代方案
+
+**[Mozilla-Ozone/llamafile](https://github.com/mozilla-ai/llamafile)**：“单文件大模型”概念的先驱。`llamafile` 使用了 Cosmopolitan Libc 技术来实现令人惊叹的跨平台特性（同一个文件在 Windows/macOS/Linux 均可运行），并内置了 Web UI。而 **LLMExe** 选择了另一条路线：我们专注于提供一个**原生的、极致精简的 Windows 纯命令行替代方案**，使用最标准的 C++ 工具链（CMake/MinGW）构建，没有复杂的跨平台编译魔法，代码极易理解和二次开发。

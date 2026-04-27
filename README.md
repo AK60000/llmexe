@@ -102,3 +102,7 @@ At runtime, the executable:
 
 **llama.cpp** — https://github.com/ggml-org/llama.cpp  
 This project is built directly on top of the `llama.cpp` inference engine. All GGUF loading, tokenization, sampling, and model evaluation logic is provided by `llama.cpp` (MIT License). We gratefully acknowledge the `ggml-org` team for building and maintaining this exceptional open-source library.
+
+## Related Projects & Alternatives
+
+**[Mozilla-Ozone/llamafile](https://github.com/mozilla-ai/llamafile)**: The pioneer of the "single-file LLM" concept. While `llamafile` uses Cosmopolitan Libc to create a brilliant multi-platform executable (Windows/macOS/Linux in one file) with a built-in web server, **LLMExe** takes a different approach. LLMExe focuses on being a **Windows-native, radically simplified, and minimal CLI alternative** built with standard C++ toolchains (CMake/MinGW) without complex cross-compilation magic.
