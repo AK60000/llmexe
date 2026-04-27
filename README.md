@@ -97,3 +97,8 @@ At runtime, the executable:
 ├── README.md
 └── README_zh.md
 ```
+
+## Acknowledgments
+
+**llama.cpp** — https://github.com/ggml-org/llama.cpp  
+This project is built directly on top of the `llama.cpp` inference engine. All GGUF loading, tokenization, sampling, and model evaluation logic is provided by `llama.cpp` (MIT License). We gratefully acknowledge the `ggml-org` team for building and maintaining this exceptional open-source library.

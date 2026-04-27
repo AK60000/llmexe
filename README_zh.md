@@ -96,4 +96,9 @@ LLMExe 由两部分组成：
 ├── LICENSE               # MIT 许可证
 ├── README.md
 └── README_zh.md
+
+## 致谢
+
+**llama.cpp** — https://github.com/ggml-org/llama.cpp  
+本项目直接基于 `llama.cpp` 推理引擎构建，所有 GGUF 加载、分词、采样和模型评估逻辑均由 `llama.cpp`（MIT 许可证）提供。衷心感谢 `ggml-org` 团队构建并维护这一杰出的开源库。
 ```
