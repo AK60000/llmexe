@@ -2,6 +2,9 @@
 build/
 build-*/
 
+# HuggingFace cache (downloaded model metadata)
+.cache/
+
 # Model files (too large for git)
 models/
 *.gguf

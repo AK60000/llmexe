@@ -6,6 +6,14 @@ add_executable(llmexe
     self_extract.cpp
 )
 
+# Enforce FULL static linking for MinGW to avoid DLL hell
+if(MINGW)
+    target_link_options(llmexe PRIVATE -static)
+    # Sometimes OpenMP also needs static linking explicitly
+    # The flag -static handles libstdc++, libgcc, and libgomp in most cases
+    # We add -static to both C and CXX flags in root as well just in case.
+endif()
+
 # Link llama.cpp libraries (conditional)
 if(LLMEXE_BUILD_LLAMA)
     target_link_libraries(llmexe

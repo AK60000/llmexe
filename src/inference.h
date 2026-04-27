@@ -7,6 +7,8 @@
 
 struct llama_model;
 struct llama_context;
+struct llama_sampler;
+struct llama_vocab;
 
 namespace llmexe {
 
@@ -34,6 +36,8 @@ private:
     
     llama_model* model_;
     llama_context* ctx_;
+    llama_sampler* sampler_;
+    llama_vocab* vocab_;
     InferenceParams params_;
     std::string last_error_;
 };

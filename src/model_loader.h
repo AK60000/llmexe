@@ -12,14 +12,20 @@ public:
     ModelLoader();
     ~ModelLoader();
 
+    // Load model from file
+    bool loadFromFile(const std::string& path);
+    
     // Load model from embedded data (writes to temp file first)
     bool loadFromMemory(const void* data, size_t size);
     
+    // Load model from attached data (APE format)
+    bool loadFromAttachedData();
+    
     // Get the loaded model
-    llama_model* getModel() const { return model_; }
+    llama_model* getModel() const;
     
     // Get last error message
-    const std::string& getLastError() const { return last_error_; }
+    const std::string& getLastError() const;
 
 private:
     llama_model* model_;
