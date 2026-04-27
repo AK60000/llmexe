@@ -1,5 +1,7 @@
 # llmexe
 
+[English](README.md) | [中文](README_zh.md)
+
 A minimal, standalone C++ application for running local LLMs using the latest `llama.cpp` (v0.10.0+ API).
 
 ## Overview
