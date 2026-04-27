@@ -3,7 +3,7 @@ build/
 build-*/
 
 # Model files (too large for git)
-model/
+models/
 *.gguf
 # model_data.h specifically (generated from GGUF, very large)
 model_data.h

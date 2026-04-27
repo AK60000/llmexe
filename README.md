@@ -42,7 +42,7 @@ The resulting executable will be available at `build/bin/llmexe` (or `build\bin\
 ## Example
 
 ```bash
-./build/bin/llmexe -m ./Qwen3-0.6B-Q4_K_M.gguf -p "Explain quantum computing in one sentence." -n 100 --temp 0.6
+./build/bin/llmexe -m ./models/Qwen3-0.6B-Q4_K_M.gguf -p "Explain quantum computing in one sentence." -n 100 --temp 0.6
 ```
 
 ## Architecture
