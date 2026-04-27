@@ -50,4 +50,23 @@ The resulting executable will be available at `build/bin/llmexe` (or `build\bin\
 - `src/main.cpp`: Entry point, CLI argument parsing.
 - `src/model_loader.cpp`: Initializes the llama context, manages the model and backend lifetimes.
 - `src/inference.cpp`: Handles tokenization, inference evaluation loops, and streaming output using the new `llama_sampler` API.
+- `src/self_extract.cpp`: Enables standalone deployment by extracting an appended `.gguf` payload at runtime.
 - `llama.cpp` integration: The project fetches and builds `llama.cpp` automatically via CMake `FetchContent`.
+
+## Standalone Packaging
+
+You can package the compiled executable and the `.gguf` model into a single, standalone executable that can be run anywhere on Windows without passing the `-m` flag.
+
+Run the provided PowerShell packaging script:
+
+```powershell
+.\scripts\package.ps1
+```
+
+This will create `llmexe_standalone.exe` (approx. 400MB if using a 0.6B Q4 model). You can run this file directly:
+
+```powershell
+.\llmexe_standalone.exe --prompt "Hello! How are you?"
+```
+
+At runtime, the executable will automatically extract its embedded model to the system's temporary directory (`%TEMP%`) and load it. Subsequent runs are instantaneous because it checks for the extracted payload cache first.

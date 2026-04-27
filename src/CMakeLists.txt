@@ -1,9 +1,9 @@
 # Create the executable
-add_executable(llmexe
+add_executable(llmexe 
     main.cpp
     model_loader.cpp
     inference.cpp
-    ${CMAKE_SOURCE_DIR}/model/model_data.cpp
+    self_extract.cpp
 )
 
 # Link llama.cpp libraries (conditional)
@@ -11,7 +11,9 @@ if(LLMEXE_BUILD_LLAMA)
     target_link_libraries(llmexe
         PRIVATE
             llama
-            ggml_static
+            ggml
+            ggml-base
+            ggml-cpu
     )
 endif()
 

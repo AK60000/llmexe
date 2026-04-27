@@ -3,81 +3,85 @@
 #include <vector>
 #include "model_loader.h"
 #include "inference.h"
-#include "model_data.h"
+#include "self_extract.h"
 
-void printUsage(const char* prog_name) {
-    std::cout << "Usage: " << prog_name << " [options] \"prompt\"\n"
+void printUsage(const char* prog) {
+    std::cout << "Usage: " << prog << " [options]\n"
               << "Options:\n"
-              << "  --temperature FLOAT   Temperature (default: 0.7)\n"
-              << "  --top-p FLOAT        Top-p sampling (default: 0.9)\n"
-              << "  --max-tokens INT     Max tokens to generate (default: 512)\n"
-              << "  --threads INT        Number of threads (default: auto)\n"
-              << "  -h, --help           Show this help message\n";
-}
-
-bool parseArgs(int argc, char** argv, 
-              std::string& prompt,
-              llmexe::InferenceParams& params) {
-    std::vector<std::string> args(argv + 1, argv + argc);
-    
-    for (size_t i = 0; i < args.size(); ++i) {
-        if (args[i] == "-h" || args[i] == "--help") {
-            return false;
-        } else if (args[i] == "--temperature" && i + 1 < args.size()) {
-            params.temperature = std::stof(args[++i]);
-        } else if (args[i] == "--top-p" && i + 1 < args.size()) {
-            params.top_p = std::stof(args[++i]);
-        } else if (args[i] == "--max-tokens" && i + 1 < args.size()) {
-            params.max_tokens = std::stoi(args[++i]);
-        } else if (args[i] == "--threads" && i + 1 < args.size()) {
-            params.num_threads = std::stoi(args[++i]);
-        } else if (args[i][0] != '-') {
-            prompt = args[i];
-        }
-    }
-    
-    return !prompt.empty();
+              << "  -m, --model <path>      Path to GGUF model file\n"
+              << "  -p, --prompt <text>     Prompt to generate from\n"
+              << "  -n, --max-tokens <n>    Maximum number of tokens to generate (default: 512)\n"
+              << "  -t, --threads <n>       Number of threads to use (default: 4)\n"
+              << "  --temp <f>              Temperature (default: 0.7)\n"
+              << "  --top_p <f>             Top-P (default: 0.9)\n"
+              << "  -h, --help              Show this help message\n";
 }
 
 int main(int argc, char** argv) {
-    // Parse command line arguments
-    std::string prompt;
+    std::string prompt = "Hello, how are you?";
+    std::string model_path = llmexe::extractEmbeddedModel();
+    if (model_path.empty()) {
+        model_path = "Qwen3-0.6B-Q4_K_M.gguf"; // Default fallback
+    }
+
     llmexe::InferenceParams params;
+    params.max_tokens = 512;
+    params.num_threads = 4;
+    params.temperature = 0.7f;
+    params.top_p = 0.9f;
     
-    if (!parseArgs(argc, argv, prompt, params)) {
-        printUsage(argv[0]);
-        return 1;
+    // Parse arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "-h" || arg == "--help") {
+            printUsage(argv[0]);
+            return 0;
+        } else if ((arg == "-m" || arg == "--model") && i + 1 < argc) {
+            model_path = argv[++i];
+        } else if ((arg == "-p" || arg == "--prompt") && i + 1 < argc) {
+            prompt = argv[++i];
+        } else if ((arg == "-n" || arg == "--max-tokens") && i + 1 < argc) {
+            params.max_tokens = std::stoi(argv[++i]);
+        } else if ((arg == "-t" || arg == "--threads") && i + 1 < argc) {
+            params.num_threads = std::stoi(argv[++i]);
+        } else if (arg == "--temp" && i + 1 < argc) {
+            params.temperature = std::stof(argv[++i]);
+        } else if (arg == "--top_p" && i + 1 < argc) {
+            params.top_p = std::stof(argv[++i]);
+        } else {
+            std::cerr << "Unknown argument: " << arg << "\n";
+            printUsage(argv[0]);
+            return 1;
+        }
     }
     
-    // Load model from embedded data
+    // std::cout << "Loading model " << model_path << "..." << std::endl;
+    
     llmexe::ModelLoader loader;
     
-    // Model data will be linked from model_data.h
-    extern const unsigned char model_data[];
-    extern const unsigned int model_data_size;
+    // Turn off llama.cpp's stderr logging unless necessary
+    // We keep it default here, users expect some loading info
     
-    std::cout << "Loading model from memory..." << std::endl;
-    if (!loader.loadFromMemory(model_data, model_data_size)) {
-        std::cerr << "Error: " << loader.getLastError() << std::endl;
+    if (!loader.loadFromFile(model_path)) {
+        std::cerr << "Failed to load model: " << loader.getLastError() << "\n";
         return 1;
     }
     
-    // Initialize inference engine
     llmexe::InferenceEngine engine(loader.getModel());
+    
     if (!engine.initialize(params)) {
-        std::cerr << "Error: " << engine.getLastError() << std::endl;
+        std::cerr << "Failed to initialize inference engine: " << engine.getLastError() << "\n";
         return 1;
     }
     
-    // Streaming callback
+    // std::cout << "\nGeneration started. Prompt: '" << prompt << "'\n\n";
+    
     auto callback = [](const std::string& token) {
         std::cout << token << std::flush;
     };
     
-    // Generate response
-    std::cout << "\nGenerating...\n" << std::endl;
     if (!engine.generate(prompt, callback)) {
-        std::cerr << "\nError: " << engine.getLastError() << std::endl;
+        std::cerr << "\nGeneration failed: " << engine.getLastError() << "\n";
         return 1;
     }
     
