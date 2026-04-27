@@ -1,110 +1,53 @@
-# llmexe - LLM Executable
+# llmexe
 
-将Qwen3-0.6B大模型通过llama.cpp集成到单一可执行文件中。
+A minimal, standalone C++ application for running local LLMs using the latest `llama.cpp` (v0.10.0+ API).
 
-## 构建步骤
+## Overview
 
-### 1. 克隆项目（如果还没克隆）
+This project provides a single executable (`llmexe`) that can load `.gguf` model files and perform stream-based text generation. It avoids Python dependencies by interacting directly with the native `llama.cpp` library.
+
+## Prerequisites
+
+- CMake (>= 3.10)
+- A C++17 compatible compiler (e.g., GCC, Clang, MSVC)
+- A downloaded `.gguf` model (e.g., Qwen3-0.6B-Q4_K_M.gguf)
+
+## Build Instructions
+
 ```bash
-git clone <repo-url>
-cd llmexe
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
 ```
 
-### 2. 初始化submodule
+The resulting executable will be available at `build/bin/llmexe` (or `build\bin\llmexe.exe` on Windows).
+
+## Usage
+
 ```bash
-git submodule update --init --recursive
+./build/bin/llmexe --model path/to/your/model.gguf --prompt "Your prompt here" [options]
 ```
 
-### 3. 配置和构建（使用假模型数据）
+### Options
+
+- `-m, --model <path>`: Path to the GGUF model file (required)
+- `-p, --prompt <text>`: The initial prompt to start generating from (required)
+- `-n, --max-tokens <n>`: Maximum number of tokens to generate (default: 512)
+- `-t, --threads <n>`: Number of threads to use for generation (default: 4)
+- `--temp <f>`: Temperature for sampling (default: 0.7)
+- `--top_p <f>`: Top-P sampling parameter (default: 0.9)
+- `-h, --help`: Show help message
+
+## Example
+
 ```bash
-cmake -B build -G "MinGW Makefiles"
-cmake --build build
+./build/bin/llmexe -m ./Qwen3-0.6B-Q4_K_M.gguf -p "Explain quantum computing in one sentence." -n 100 --temp 0.6
 ```
 
-这会生成一个带有假模型数据的exe，模型加载会失败（预期行为）。
+## Architecture
 
-### 4. 下载真实模型并转换
-
-#### 4.1 下载Qwen3-0.6B GGUF模型
-从HuggingFace或ModelScope下载 `qwen3-0.6b-q4_K_M.gguf` 模型文件。
-
-例如：
-```bash
-# 使用huggingface_hub
-huggingface-cli download Qwen/Qwen3-0.6B-GGUF qwen3-0.6b-q4_K_M.gguf --local-dir .
-```
-
-#### 4.2 转换为C头文件
-```bash
-python scripts/convert_gguf_to_header.py path/to/qwen3-0.6b-q4_K_M.gguf model/model_data.h
-```
-
-**警告：** 转换后的model_data.h文件会非常大（几百MB到几GB），编译时间会很长（可能几小时）。
-
-#### 4.3 重新构建
-```bash
-Remove-Item -Recurse -Force build
-cmake -B build -G "MinGW Makefiles"
-cmake --build build
-```
-
-## 使用方法
-
-### 显示帮助
-```bash
-./build/bin/llmexe.exe --help
-```
-
-### 生成文本
-```bash
-./build/bin/llmexe.exe "你好，请介绍一下自己"
-```
-
-### 调整参数
-```bash
-./build/bin/llmexe.exe --temperature 0.8 --top-p 0.95 --max-tokens 1024 "写一个故事"
-```
-
-## 参数说明
-
-- `--temperature FLOAT` - 温度参数，控制随机性（默认0.7）
-- `--top-p FLOAT` - Top-p采样（默认0.9）
-- `--max-tokens INT` - 最大生成token数（默认512）
-- `--threads INT` - 线程数（默认自动检测）
-- `-h, --help` - 显示帮助
-
-## 注意事项
-
-1. **模型嵌入exe**：模型数据被转换为C数组并编译进exe，导致：
-   - exe文件非常大（和模型一样大，几百MB到几GB）
-   - 编译时间很长
-   - 每次修改模型都需要重新编译
-
-2. **替代方案**：如果不需要模型嵌入exe，可以修改`src/model_loader.cpp`，支持从外部文件加载模型（更快的迭代速度）。
-
-3. **Qwen3提示词格式**：程序自动使用Qwen3的聊天模板：
-   ```
-   <|im_start|>user
-   {用户输入}<|im_end|>
-   <|im_start|>assistant
-   ```
-
-## 项目结构
-
-```
-llmexe/
-├── CMakeLists.txt          # 主构建配置
-├── src/                   # 源代码
-│   ├── main.cpp          # 入口，CLI解析
-│   ├── model_loader.cpp  # 模型加载
-│   └── inference.cpp    # 推理引擎
-├── model/                 # 模型数据（gitignore，不提交）
-├── scripts/               # 工具脚本
-│   └── convert_gguf_to_header.py
-└── third_party/
-    └── llama.cpp/        # submodule
-```
-
-## 许可证
-
-本项目遵循相应许可证（llama.cpp遵循其自身许可证）。
+- `src/main.cpp`: Entry point, CLI argument parsing.
+- `src/model_loader.cpp`: Initializes the llama context, manages the model and backend lifetimes.
+- `src/inference.cpp`: Handles tokenization, inference evaluation loops, and streaming output using the new `llama_sampler` API.
+- `llama.cpp` integration: The project fetches and builds `llama.cpp` automatically via CMake `FetchContent`.
