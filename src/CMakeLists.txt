@@ -1,8 +1,7 @@
 # Create the executable
 add_executable(llmexe 
     main.cpp
-    model_loader.cpp
-    inference.cpp
+    llm.cpp
     self_extract.cpp
 )
 
@@ -30,8 +29,6 @@ target_include_directories(llmexe
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/third_party/llama.cpp
-        ${CMAKE_SOURCE_DIR}/third_party/llama.cpp/common
-        ${CMAKE_SOURCE_DIR}/model
 )
 
 # Set compile definitions (platform-specific)

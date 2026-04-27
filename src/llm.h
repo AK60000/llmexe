@@ -1,9 +1,6 @@
-#ifndef LLMEXE_INFERENCE_H
-#define LLMEXE_INFERENCE_H
-
+#pragma once
 #include <string>
 #include <functional>
-#include <vector>
 
 struct llama_model;
 struct llama_context;
@@ -13,35 +10,35 @@ struct llama_vocab;
 namespace llmexe {
 
 struct InferenceParams {
+    int max_tokens = 512;
+    int num_threads = 4;
     float temperature = 0.7f;
     float top_p = 0.9f;
-    int max_tokens = 512;
-    int num_threads = 0; // 0 = auto-detect
 };
 
 using StreamCallback = std::function<void(const std::string&)>;
 
-class InferenceEngine {
+class LLM {
 public:
-    InferenceEngine(llama_model* model);
-    ~InferenceEngine();
+    LLM();
+    ~LLM();
 
-    bool initialize(const InferenceParams& params);
+    // Load the model from file and initialize context/sampler
+    bool load(const std::string& model_path, const InferenceParams& params);
+
+    // Generate response from prompt, streaming tokens via callback
     bool generate(const std::string& prompt, const StreamCallback& callback);
-    
+
     const std::string& getLastError() const { return last_error_; }
 
 private:
-    std::string buildQwenPrompt(const std::string& user_input);
+    llama_model* model_ = nullptr;
+    llama_context* ctx_ = nullptr;
+    llama_sampler* sampler_ = nullptr;
+    const llama_vocab* vocab_ = nullptr;
     
-    llama_model* model_;
-    llama_context* ctx_;
-    llama_sampler* sampler_;
-    llama_vocab* vocab_;
     InferenceParams params_;
     std::string last_error_;
 };
 
 } // namespace llmexe
-
-#endif // LLMEXE_INFERENCE_H

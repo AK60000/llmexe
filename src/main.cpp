@@ -1,8 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "model_loader.h"
-#include "inference.h"
+#include "llm.h"
 #include "self_extract.h"
 
 void printUsage(const char* prog) {
@@ -22,10 +21,6 @@ int main(int argc, char** argv) {
     std::string model_path = llmexe::extractEmbeddedModel();
 
     llmexe::InferenceParams params;
-    params.max_tokens = 512;
-    params.num_threads = 4;
-    params.temperature = 0.7f;
-    params.top_p = 0.9f;
     
     // Parse arguments
     for (int i = 1; i < argc; i++) {
@@ -59,17 +54,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    llmexe::ModelLoader loader;
+    llmexe::LLM runner;
     
-    if (!loader.loadFromFile(model_path)) {
-        std::cerr << "Failed to load model: " << loader.getLastError() << "\n";
-        return 1;
-    }
-    
-    llmexe::InferenceEngine engine(loader.getModel());
-    
-    if (!engine.initialize(params)) {
-        std::cerr << "Failed to initialize inference engine: " << engine.getLastError() << "\n";
+    if (!runner.load(model_path, params)) {
+        std::cerr << "Initialization failed: " << runner.getLastError() << "\n";
         return 1;
     }
     
@@ -77,8 +65,8 @@ int main(int argc, char** argv) {
         std::cout << token << std::flush;
     };
     
-    if (!engine.generate(prompt, callback)) {
-        std::cerr << "\nGeneration failed: " << engine.getLastError() << "\n";
+    if (!runner.generate(prompt, callback)) {
+        std::cerr << "\nGeneration failed: " << runner.getLastError() << "\n";
         return 1;
     }
     
